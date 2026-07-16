@@ -6,7 +6,7 @@ FOVScreenGui.IgnoreGuiInset = true
 FOVScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 FOVScreenGui.Parent = game.CoreGui
 
-local function BuildFOV(name, Config)
+local function BuildFOV(Name, Config)
     local Container = Instance.new("Frame")
     Container.Name                   = Name
     Container.BackgroundTransparency = 1
