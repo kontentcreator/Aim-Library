@@ -6,8 +6,7 @@ FOVScreenGui.IgnoreGuiInset = true
 FOVScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 FOVScreenGui.Parent = game.CoreGui
 
-
-local function BuildFOV(name, cfg)
+local function BuildFOV(name, Config)
     local Container = Instance.new("Frame")
     Container.Name                   = Name
     Container.BackgroundTransparency = 1
@@ -18,7 +17,7 @@ local function BuildFOV(name, cfg)
     local Fill = Instance.new("Frame")
     Fill.Size                   = UDim2.new(1, 0, 1, 0)
     Fill.BackgroundColor3       = Color3.new(1, 1, 1)
-    Fill.BackgroundTransparency = cfg.FilledTransparency
+    Fill.BackgroundTransparency = Config.FilledTransparency
     Fill.BorderSizePixel        = 0
     Fill.Visible                = false
     Fill.ZIndex                 = 1
@@ -29,10 +28,10 @@ local function BuildFOV(name, cfg)
     FillCorner.Parent       = Fill
     local FillGradient = Instance.new("UIGradient")
     FillGradient.Color    = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, cfg.FilledColor1),
-        ColorSequenceKeypoint.new(1, cfg.FilledColor2),
+        ColorSequenceKeypoint.new(0, Config.FilledColor1),
+        ColorSequenceKeypoint.new(1, Config.FilledColor2),
     })
-    FillGradient.Rotation = cfg.FilledRotation
+    FillGradient.Rotation = Config.FilledRotation
     Fillgradient.Parent   = Fill
 
     local Outline = Instance.new("Frame")
@@ -40,37 +39,37 @@ local function BuildFOV(name, cfg)
     Outline.BackgroundTransparency = 1
     Outline.BorderSizePixel        = 0
     Outline.ZIndex                 = 2
-    Outline.Parent                 = container
+    Outline.Parent                 = Container
 
     local OutlineCorner = Instance.new("UICorner")
     OutlineCorner.CornerRadius = UDim.new(1, 0)
-    OutlineCorner.Parent       = outline
+    OutlineCorner.Parent       = Outline
 
     local Stroke = Instance.new("UIStroke")
     Stroke.Color           = Color3.new(1, 1, 1)
-    Stroke.Thickness       = cfg.OutlineThickness
-    Stroke.Transparency    = cfg.OutlineTransparency
+    Stroke.Thickness       = Config.OutlineThickness
+    Stroke.Transparency    = Config.OutlineTransparency
     Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     Stroke.Parent          = Outline
 
     local StrokeGradient = Instance.new("UIGradient")
     StrokeGradient.Color    = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, cfg.OutlineColor1),
-        ColorSequenceKeypoint.new(1, cfg.OutlineColor2),
+        ColorSequenceKeypoint.new(0, Config.OutlineColor1),
+        ColorSequenceKeypoint.new(1, Config.OutlineColor2),
     })
-    StrokeGradient.Rotation = cfg.OutlineRotation
+    StrokeGradient.Rotation = Config.OutlineRotation
     StrokeGradient.Parent   = Stroke
 
     return {
         Container      = Container,
         Fill           = Fill,
-        FillGradient   = Fillqradient,
+        FillGradient   = FillGradient,
         Stroke         = Stroke,
       SstrokeGradient = StrokeGradient,
     }
 end
 
-local SlientFOV  = BuildFOV("SilentFOV", silentFOVCfg)
+local SlientFOV  = BuildFOV("SilentFOV", silentFOVConfig)
 local SilentFOVContainer  = SlientFOV.Container
 local SilentFOVFill       = SlientFOV.Fill
 local SilentFOVFillGradient   = SlientFOV.FillGradient
@@ -79,15 +78,51 @@ local SilentFOVStrokeGradient = SlientFOV.StrokeGradient
 
 local function SilentLineGradient()
     silentFOVStrokeGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, silentFOVCfg.OutlineColor1),
-        ColorSequenceKeypoint.new(1, silentFOVCfg.OutlineColor2),
+        ColorSequenceKeypoint.new(0, SilentFOVConfig.OutlineColor1),
+        ColorSequenceKeypoint.new(1, SilentFOVConfig.OutlineColor2),
     })
 end
 local function UpdSilentGradient()
     silentFOVFillGrad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, silentFOVCfg.FilledColor1),
-        ColorSequenceKeypoint.new(1, silentFOVCfg.FilledColor2),
+        ColorSequenceKeypoint.new(0, SilentFOVConfig.FilledColor1),
+        ColorSequenceKeypoint.new(1, SilentFOVConfig.FilledColor2),
     })
 end
 
+local AimbotFOVConfig = {
+    OutlineColor1       = Color3.fromRGB(255, 255, 255),
+    OutlineColor2       = Color3.fromRGB(255, 255, 255),
+    OutlineRotation     = 0,
+    OutlineThickness    = 1.5,
+    OutlineTransparency = 0,
+    FilledEnabled       = false,
+    FilledColor1        = Color3.fromRGB(255, 255, 255),
+    FilledColor2        = Color3.fromRGB(0, 0, 0),
+    FilledRotation      = 0,
+    FilledTransparency  = 0.7,
+    FilledAnimated      = false,
+    FilledSpeed         = 1,
+    SpinOn              = false,
+    SpinSpeed           = 1,
+}
+
+local AimbotFOV                = buildfov("AimbotFOV", AimbotFOVConfig)
+local AimbotFOVContainer  = AimbotFOV.Container
+local AimbotFOVFill       = AimbotFOV.Fill
+local AimbotFOVFillGrad   = AimbotFOV.FillGradient
+local AimbotFOVStroke     = AimbotFOV.Stroke
+local AimbotFOVStrokeGrad = AimbotFOV.StrokeGradient
+
+local function UpdAimbotOutlineGradient()
+    aimbotFOVStrokeGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, aimbotFOVConfig.OutlineColor1),
+        ColorSequenceKeypoint.new(1, aimbotFOVConfig.OutlineColor2),
+    })
+end
+local function UpdAimbotFillGradient()
+    aimbotFOVFillGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, aimbotFOVConfig.FilledColor1),
+        ColorSequenceKeypoint.new(1, aimbotFOVConfig.FilledColor2),
+    })
+end
 
