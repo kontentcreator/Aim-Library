@@ -31,7 +31,7 @@ end
 local Visuals = {}
 Visuals.__index = Visuals
 
-local function createRingVisual(parent, name, color, thickness)
+local function createLayer(parent, name, sizeOffset, thickness, color, gradientA, gradientB)
 	local frame = Instance.new("Frame")
 	frame.Name = name
 	frame.Size = UDim2.new(0, 0, 0, 0)
@@ -39,7 +39,7 @@ local function createRingVisual(parent, name, color, thickness)
 	frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	frame.BackgroundTransparency = 1
 	frame.BorderSizePixel = 0
-	frame.ZIndex = 5
+	frame.ZIndex = 10
 	frame.Parent = parent
 
 	local corner = Instance.new("UICorner")
@@ -49,7 +49,7 @@ local function createRingVisual(parent, name, color, thickness)
 	local stroke = Instance.new("UIStroke")
 	stroke.Name = "_stroke"
 	stroke.Enabled = true
-	stroke.Color = color
+	stroke.Color = color or Color3.fromRGB(255, 255, 255)
 	stroke.Thickness = thickness or 1
 	stroke.Transparency = 0
 	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
@@ -60,9 +60,9 @@ local function createRingVisual(parent, name, color, thickness)
 	gradient.Name = "UIGradient"
 	gradient.Enabled = true
 	gradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(166, 193, 255)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 94, 255)),
+		ColorSequenceKeypoint.new(0, gradientA or Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.5, gradientB or Color3.fromRGB(166, 193, 255)),
+		ColorSequenceKeypoint.new(1, gradientA or Color3.fromRGB(0, 94, 255)),
 	})
 	gradient.Transparency = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 0.8),
@@ -71,7 +71,18 @@ local function createRingVisual(parent, name, color, thickness)
 	})
 	gradient.Parent = stroke
 
+	frame._sizeOffset = sizeOffset or 0
 	return frame
+end
+
+local function createModeVisual(parent, baseColor)
+	local layers = {
+		createLayer(parent, "OuterLayer", 0, 1, baseColor, Color3.fromRGB(255, 255, 255), Color3.fromRGB(166, 193, 255)),
+		createLayer(parent, "MiddleLayer", -18, 1.25, baseColor, Color3.fromRGB(255, 255, 255), Color3.fromRGB(123, 212, 255)),
+		createLayer(parent, "AccentLayer", -36, 2.5, baseColor, Color3.fromRGB(197, 118, 188), Color3.fromRGB(111, 142, 255)),
+		createLayer(parent, "OutlineLayer", -54, 3.25, baseColor, Color3.fromRGB(255, 255, 255), Color3.fromRGB(128, 221, 255)),
+	}
+	return layers
 end
 
 function Visuals.new(aimLib)
@@ -83,8 +94,8 @@ function Visuals.new(aimLib)
 	self.Gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	self.FOVVisuals = {
-		Aimbot = createRingVisual(self.Gui, "AimbotFOV", Color3.fromRGB(255, 255, 255), 1),
-		SilentAim = createRingVisual(self.Gui, "SilentAimFOV", Color3.fromRGB(255, 255, 255), 1),
+		Aimbot = createModeVisual(self.Gui, Color3.fromRGB(255, 255, 255)),
+		SilentAim = createModeVisual(self.Gui, Color3.fromRGB(255, 255, 255)),
 	}
 
 	self._connection = RunService.RenderStepped:Connect(function(dt)
@@ -97,21 +108,24 @@ function Visuals.new(aimLib)
 end
 
 function Visuals:DrawFOV(modeName, modeConfig, position)
-	local frame = self.FOVVisuals[modeName]
-	if not frame then
+	local layers = self.FOVVisuals[modeName]
+	if not layers then
 		return
 	end
 
-	frame.Visible = modeConfig.ShowFOV and self.Enabled
-	frame.Size = UDim2.new(0, modeConfig.FOV * 2, 0, modeConfig.FOV * 2)
-	frame.Position = UDim2.new(0, position.X, 0, position.Y)
-	frame.ZIndex = 10
+	local radius = modeConfig.FOV or 200
+	for _, layer in ipairs(layers) do
+		layer.Visible = modeConfig.ShowFOV and self.Enabled
+		layer.Size = UDim2.new(0, math.max(0, radius * 2 + (layer._sizeOffset or 0)), 0, math.max(0, radius * 2 + (layer._sizeOffset or 0)))
+		layer.Position = UDim2.new(0, position.X, 0, position.Y)
+		layer.ZIndex = 10
 
-	local stroke = frame:FindFirstChild("_stroke")
-	if stroke then
-		stroke.Color = modeConfig.Color or Color3.fromRGB(255, 255, 255)
-		stroke.Thickness = math.max(1, modeConfig.Thickness or 1)
-		stroke.Transparency = modeConfig.Transparency or 0.1
+		local stroke = layer:FindFirstChild("_stroke")
+		if stroke then
+			stroke.Color = modeConfig.Color or Color3.fromRGB(255, 255, 255)
+			stroke.Thickness = math.max(1, (modeConfig.Thickness or 1) + (layer._sizeOffset < 0 and 0.5 or 0))
+			stroke.Transparency = modeConfig.Transparency or 0.1
+		end
 	end
 end
 
@@ -127,8 +141,11 @@ function Visuals:Update(aimLib, dt)
 		self:DrawFOV("Aimbot", aimLib.Config.Aimbot, aimbotPosition)
 		self:DrawFOV("SilentAim", aimLib.Config.SilentAim, silentPosition)
 	else
-		self.FOVVisuals.Aimbot.Visible = false
-		self.FOVVisuals.SilentAim.Visible = false
+		for _, mode in pairs(self.FOVVisuals) do
+			for _, layer in ipairs(mode) do
+				layer.Visible = false
+			end
+		end
 	end
 end
 
