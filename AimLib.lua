@@ -71,8 +71,10 @@ local function createLayer(parent, name, sizeOffset, thickness, color, gradientA
 	})
 	gradient.Parent = stroke
 
-	frame._sizeOffset = sizeOffset or 0
-	return frame
+	return {
+		Frame = frame,
+		SizeOffset = sizeOffset or 0,
+	}
 end
 
 local function createModeVisual(parent, baseColor)
@@ -115,15 +117,16 @@ function Visuals:DrawFOV(modeName, modeConfig, position)
 
 	local radius = modeConfig.FOV or 200
 	for _, layer in ipairs(layers) do
-		layer.Visible = modeConfig.ShowFOV and self.Enabled
-		layer.Size = UDim2.new(0, math.max(0, radius * 2 + (layer._sizeOffset or 0)), 0, math.max(0, radius * 2 + (layer._sizeOffset or 0)))
-		layer.Position = UDim2.new(0, position.X, 0, position.Y)
-		layer.ZIndex = 10
+		local frame = layer.Frame
+		frame.Visible = modeConfig.ShowFOV and self.Enabled
+		frame.Size = UDim2.new(0, math.max(0, radius * 2 + layer.SizeOffset), 0, math.max(0, radius * 2 + layer.SizeOffset))
+		frame.Position = UDim2.new(0, position.X, 0, position.Y)
+		frame.ZIndex = 10
 
-		local stroke = layer:FindFirstChild("_stroke")
+		local stroke = frame:FindFirstChild("_stroke")
 		if stroke then
 			stroke.Color = modeConfig.Color or Color3.fromRGB(255, 255, 255)
-			stroke.Thickness = math.max(1, (modeConfig.Thickness or 1) + (layer._sizeOffset < 0 and 0.5 or 0))
+			stroke.Thickness = math.max(1, (modeConfig.Thickness or 1) + (layer.SizeOffset < 0 and 0.5 or 0))
 			stroke.Transparency = modeConfig.Transparency or 0.1
 		end
 	end
@@ -143,7 +146,7 @@ function Visuals:Update(aimLib, dt)
 	else
 		for _, mode in pairs(self.FOVVisuals) do
 			for _, layer in ipairs(mode) do
-				layer.Visible = false
+				layer.Frame.Visible = false
 			end
 		end
 	end
